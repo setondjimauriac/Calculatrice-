@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MathoPlanet — Apprendre les calculs</title>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;600;800&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0f0e17;
+    --surface: #1a1830;
+    --card: #22203a;
+    --accent-add: #f4a261;
+    --accent-mul: #2ec4b6;
+    --accent-div: #e84393;
+    --accent-sub: #a8dadc;
+    --gold: #ffd166;
+    --text: #fffffe;
+    --muted: #a7a5c0;
+    --success: #06d6a0;
+    --error: #ef4444;
+    --radius: 20px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Nunito', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    overflow-x: hidden;
+  }
+
+  /* Animated background stars */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: radial-gradient(ellipse at 20% 50%, #1a0933 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 20%, #0d1f33 0%, transparent 50%),
+                radial-gradient(ellipse at 60% 80%, #1a1233 0%, transparent 40%);
+    pointer-events: none;
+  }
+
+  .stars {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    overflow: hidden;
+  }
+  .star {
+    position: absolute;
+    background: white;
+    border-radius: 50%;
+    animation: twinkle var(--dur) ease-in-out infinite alternate;
+    opacity: 0;
+  }
+  @keyframes twinkle {
+    0% { opacity: 0; transform: scale(0.8); }
+    100% { opacity: 0.7; transform: scale(1.2); }
+  }
+
+  .app {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: 540px;
+    padding: 24px 16px;
+  }
+
+  /* Header */
+  .logo {
+    font-family: 'Baloo 2', cursive;
+    font-size: 2.4rem;
+    font-weight: 800;
+    text-align: center;
+    letter-spacing: -1px;
+    margin-bottom: 6px;
+    background: linear-gradient(135deg, var(--gold), #ff9f1c, var(--accent-add));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .tagline {
+    text-align: center;
+    color: var(--muted);
+    font-size: 0.9rem;
+    margin-bottom: 32px;
+    letter-spacing: 0.5px;
+  }
+
+  /* Cards */
+  .card {
+    background: var(--card);
+    border-radius: var(--radius);
+    padding: 32px 28px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+    border: 1px solid rgba(255,255,255,0.06);
+    animation: slideUp 0.4s cubic-bezier(0.34,1.56,0.64,1) both;
+  }
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(30px) scale(0.96); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+  }
+
+  .card h2 {
+    font-family: 'Baloo 2', cursive;
+    font-size: 1.5rem;
+    font-weight: 800;
+    margin-bottom: 8px;
+  }
+  .card p {
+    color: var(--muted);
+    font-size: 0.92rem;
+    margin-bottom: 24px;
+    line-height: 1.6;
+  }
+
+  /* Menu buttons */
+  .menu-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+  }
+  .menu-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 22px 12px;
+    border-radius: 16px;
+    border: 2px solid transparent;
+    background: var(--surface);
+    color: var(--text);
+    font-family: 'Baloo 2', cursive;
+    font-size: 1rem;
+    font-weight: 800;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 0.3px;
+  }
+  .menu-btn:hover {
+    transform: translateY(-4px) scale(1.03);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+  }
+  .menu-btn .icon { font-size: 2rem; line-height: 1; }
+
+  .btn-add  { border-color: var(--accent-add); }
+  .btn-add:hover  { background: rgba(244,162,97,0.15); }
+  .btn-mul  { border-color: var(--accent-mul); }
+  .btn-mul:hover  { background: rgba(46,196,182,0.15); }
+  .btn-div  { border-color: var(--accent-div); }
+  .btn-div:hover  { background: rgba(232,67,147,0.15); }
+  .btn-sub  { border-color: var(--accent-sub); }
+  .btn-sub:hover  { background: rgba(168,218,220,0.15); }
+
+  /* Form inputs */
+  .input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 16px;
+  }
+  label {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  input[type="text"], input[type="number"] {
+    background: var(--surface);
+    border: 2px solid rgba(255,255,255,0.08);
+    border-radius: 12px;
+    padding: 14px 16px;
+    color: var(--text);
+    font-family: 'Nunito', sans-serif;
+    font-size: 1rem;
+    font-weight: 600;
+    outline: none;
+    transition: border-color 0.2s;
+    width: 100%;
+  }
+  input[type="text"]:focus, input[type="number"]:focus {
+    border-color: var(--gold);
+  }
+  input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; }
+
+  .btn-primary {
+    width: 100%;
+    padding: 15px;
+    border: none;
+    border-radius: 14px;
+    background: linear-gradient(135deg, var(--gold), #ff9f1c);
+    color: #1a1208;
+    font-family: 'Baloo 2', cursive;
+    font-size: 1.05rem;
+    font-weight: 800;
+    cursor: pointer;
+    letter-spacing: 0.5px;
+    transition: all 0.2s;
+    margin-top: 8px;
+  }
+  .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(255,209,102,0.35); }
+  .btn-primary:active { transform: translateY(0); }
+
+  /* Progress bar */
+  .progress-wrap {
+    margin-bottom: 24px;
+  }
+  .progress-info {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.78rem;
+    color: var(--muted);
+    font-weight: 700;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .progress-bar {
+    height: 8px;
+    background: var(--surface);
+    border-radius: 99px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    border-radius: 99px;
+    background: linear-gradient(90deg, var(--gold), #ff9f1c);
+    transition: width 0.5s cubic-bezier(0.34,1.56,0.64,1);
+  }
+
+  /* Equation display */
+  .equation-box {
+    background: var(--surface);
+    border-radius: 16px;
+    padding: 28px;
+    text-align: center;
+    margin-bottom: 20px;
+    border: 2px solid rgba(255,255,255,0.07);
+  }
+  .equation-text {
+    font-family: 'Baloo 2', cursive;
+    font-size: 2.6rem;
+    font-weight: 800;
+    letter-spacing: 2px;
+    line-height: 1;
+  }
+  .eq-colored { color: var(--gold); }
+
+  /* Answer area */
+  .answer-row {
+    display: flex;
+    gap: 10px;
+    align-items: stretch;
+  }
+  .answer-row input {
+    flex: 1;
+    font-size: 1.3rem;
+    text-align: center;
+    letter-spacing: 2px;
+  }
+  .btn-check {
+    padding: 14px 22px;
+    border: none;
+    border-radius: 12px;
+    background: linear-gradient(135deg, var(--gold), #ff9f1c);
+    color: #1a1208;
+    font-family: 'Baloo 2', cursive;
+    font-size: 1rem;
+    font-weight: 800;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+  .btn-check:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(255,209,102,0.3); }
+
+  /* Feedback message */
+  .feedback {
+    margin-top: 16px;
+    padding: 16px 18px;
+    border-radius: 14px;
+    font-weight: 700;
+    font-size: 0.95rem;
+    line-height: 1.5;
+    display: none;
+    animation: popIn 0.3s cubic-bezier(0.34,1.56,0.64,1);
+  }
+  @keyframes popIn {
+    from { opacity: 0; transform: scale(0.9); }
+    to   { opacity: 1; transform: scale(1); }
+  }
+  .feedback.success {
+    display: block;
+    background: rgba(6,214,160,0.15);
+    border: 1px solid var(--success);
+    color: var(--success);
+  }
+  .feedback.error {
+    display: block;
+    background: rgba(239,68,68,0.12);
+    border: 1px solid var(--error);
+    color: #ff8080;
+  }
+
+  /* Celebration */
+  .celebration {
+    text-align: center;
+  }
+  .celebration .trophy { font-size: 4rem; margin-bottom: 12px; animation: bounce 0.6s ease infinite alternate; }
+  @keyframes bounce { to { transform: translateY(-10px) scale(1.05); } }
+  .celebration h2 { font-family: 'Baloo 2', cursive; font-size: 1.8rem; margin-bottom: 8px; color: var(--gold); }
+  .celebration p { color: var(--muted); margin-bottom: 24px; }
+
+  /* Confetti dots */
+  .confetti-wrap { position: fixed; inset: 0; pointer-events: none; z-index: 99; overflow: hidden; }
+  .confetti-dot {
+    position: absolute;
+    width: 10px; height: 10px;
+    border-radius: 2px;
+    animation: fall var(--spd) ease-in forwards;
+  }
+  @keyframes fall {
+    0%   { top: -10px; opacity: 1; transform: rotate(0deg) translateX(0); }
+    100% { top: 110vh; opacity: 0; transform: rotate(720deg) translateX(var(--drift)); }
+  }
+
+  .op-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 99px;
+    font-size: 0.75rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 14px;
+  }
+
+  /* Back link */
+  .back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.82rem;
+    color: var(--muted);
+    cursor: pointer;
+    margin-bottom: 16px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    transition: color 0.2s;
+    background: none;
+    border: none;
+  }
+  .back-link:hover { color: var(--text); }
+
+  .hidden { display: none !important; }
+
+  /* Shake animation for wrong answer */
+  @keyframes shake {
+    0%,100% { transform: translateX(0); }
+    20% { transform: translateX(-8px); }
+    40% { transform: translateX(8px); }
+    60% { transform: translateX(-5px); }
+    80% { transform: translateX(5px); }
+  }
+  .shake { animation: shake 0.4s ease; }
+</style>
+</head>
+<body>
+
+<!-- Stars background -->
+<div class="stars" id="stars"></div>
+<div class="confetti-wrap" id="confetti"></div>
+
+<div class="app">
+  <!-- SCREEN 1: Menu principal -->
+  <div id="screen-menu">
+    <div class="logo" style="font-size:1.5rem;line-height:1.3;">Réalisé par Mauriac SETONDJI</div>
+    <div class="tagline">Tél : 01 68 14 28 52 &nbsp;|&nbsp; setondjimauriac@gmail.com</div>
+    <div class="card">
+      <h2>Que veux-tu pratiquer ?</h2>
+      <p>Sélectionne une opération pour commencer ton entraînement.</p>
+      <div class="menu-grid">
+        <button class="menu-btn btn-add" onclick="selectOp('addition')">
+          <span class="icon">➕</span>Addition
+        </button>
+        <button class="menu-btn btn-mul" onclick="selectOp('multiplication')">
+          <span class="icon">✖️</span>Multiplication
+        </button>
+        <button class="menu-btn btn-div" onclick="selectOp('division')">
+          <span class="icon">➗</span>Division
+        </button>
+        <button class="menu-btn btn-sub" onclick="selectOp('soustraction')">
+          <span class="icon">➖</span>Soustraction
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCREEN 2: Saisie du nom -->
+  <div id="screen-name" class="hidden">
+    <button class="back-link" onclick="goHome()">← Retour</button>
+    <div class="card">
+      <div id="op-badge-name" class="op-badge"></div>
+      <h2>Bienvenue ! 👋</h2>
+      <p>Avant de commencer, dis-nous qui tu es.</p>
+      <div class="input-group">
+        <label>Prénom</label>
+        <input type="text" id="input-prenom" placeholder="Ex: Mauriac" autocomplete="off" />
+      </div>
+      <div class="input-group">
+        <label>Nom</label>
+        <input type="text" id="input-nom" placeholder="Ex: SETONDJI" autocomplete="off" />
+      </div>
+      <button class="btn-primary" onclick="startExercise()">C'est parti ! 🚀</button>
+    </div>
+  </div>
+
+  <!-- SCREEN 3: Exercice -->
+  <div id="screen-exercise" class="hidden">
+    <button class="back-link" onclick="goHome()">← Quitter</button>
+    <div class="card">
+      <div id="op-badge-ex" class="op-badge"></div>
+      <div class="progress-wrap">
+        <div class="progress-info">
+          <span id="progress-label">Calcul 1 / 21</span>
+          <span id="progress-pct">0%</span>
+        </div>
+        <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
+      </div>
+      <div class="equation-box">
+        <div class="equation-text" id="equation-text"></div>
+      </div>
+      <div class="answer-row">
+        <input type="number" id="answer-input" placeholder="?" autocomplete="off" onkeydown="if(event.key==='Enter') checkAnswer()" />
+        <button class="btn-check" onclick="checkAnswer()">✓ Valider</button>
+      </div>
+      <div class="feedback" id="feedback"></div>
+    </div>
+  </div>
+
+  <!-- SCREEN 4: Félicitations -->
+  <div id="screen-win" class="hidden">
+    <div class="card celebration">
+      <div class="trophy">🏆</div>
+      <h2 id="win-title"></h2>
+      <p id="win-msg"></p>
+      <button class="btn-primary" onclick="goHome()">🏠 Retour au menu</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// === STARS BACKGROUND ===
+(function() {
+  const wrap = document.getElementById('stars');
+  for (let i = 0; i < 80; i++) {
+    const s = document.createElement('div');
+    s.className = 'star';
+    const size = Math.random() * 2 + 1;
+    s.style.cssText = `width:${size}px;height:${size}px;left:${Math.random()*100}%;top:${Math.random()*100}%;--dur:${(Math.random()*3+2).toFixed(1)}s;animation-delay:${(Math.random()*4).toFixed(1)}s`;
+    wrap.appendChild(s);
+  }
+})();
+
+// === STATE ===
+let currentOp = '';
+let userName = '';
+let userLastName = '';
+let currentStep = 0; // index in exercises array
+let exercises = [];
+let feedbackTimer = null;
+
+const opConfig = {
+  addition:       { label: '➕ Addition',       color: '#f4a261', symbol: '+', emoji: '➕' },
+  multiplication: { label: '✖️ Multiplication', color: '#2ec4b6', symbol: '×', emoji: '✖️' },
+  division:       { label: '➗ Division',        color: '#e84393', symbol: '÷', emoji: '➗' },
+  soustraction:   { label: '➖ Soustraction',    color: '#a8dadc', symbol: '−', emoji: '➖' },
+};
+
+// Build exercise list: for each op, from 0 op 1 to 10 op 10
+function buildExercises(op) {
+  const list = [];
+  for (let a = 0; a <= 10; a++) {
+    for (let b = 1; b <= 10; b++) {
+      if (a === 0 && b === 1 || a > 0) {
+        // Only start from 0+1, 0×1, etc.
+        if (a === 0 || b >= 1) {
+          list.push({ a, b });
+        }
+      }
+    }
+  }
+  // Actually: from 0 op 1 to 10 op 10 → a: 0..10, b: 1..10 but starting at 0+1
+  // Re-build properly:
+  return null; // rebuilt below
+}
+
+function getExercises(op) {
+  const list = [];
+  for (let a = 0; a <= 10; a++) {
+    const bStart = (a === 0) ? 1 : 1;
+    for (let b = bStart; b <= 10; b++) {
+      list.push({ a, b });
+    }
+  }
+  return list;
+}
+
+function computeAnswer(op, a, b) {
+  switch(op) {
+    case 'addition':       return a + b;
+    case 'multiplication': return a * b;
+    case 'division':       return b === 0 ? null : parseFloat((a / b).toFixed(4));
+    case 'soustraction':   return a - b;
+  }
+}
+
+function getSymbol(op) {
+  return opConfig[op].symbol;
+}
+
+// === NAVIGATION ===
+function showScreen(id) {
+  ['screen-menu','screen-name','screen-exercise','screen-win'].forEach(s => {
+    document.getElementById(s).classList.add('hidden');
+  });
+  const el = document.getElementById(id);
+  el.classList.remove('hidden');
+  // Trigger animation
+  const card = el.querySelector('.card');
+  if (card) { card.style.animation = 'none'; card.offsetHeight; card.style.animation = ''; }
+}
+
+function goHome() {
+  currentOp = ''; userName = ''; userLastName = ''; currentStep = 0; exercises = [];
+  clearFeedback();
+  showScreen('screen-menu');
+}
+
+function selectOp(op) {
+  currentOp = op;
+  const cfg = opConfig[op];
+  // Badge on name screen
+  const badge = document.getElementById('op-badge-name');
+  badge.textContent = cfg.label;
+  badge.style.background = cfg.color + '22';
+  badge.style.color = cfg.color;
+  badge.style.border = '1px solid ' + cfg.color + '55';
+  // Clear inputs
+  document.getElementById('input-prenom').value = '';
+  document.getElementById('input-nom').value = '';
+  showScreen('screen-name');
+  setTimeout(() => document.getElementById('input-prenom').focus(), 300);
+}
+
+function startExercise() {
+  const prenom = document.getElementById('input-prenom').value.trim();
+  const nom    = document.getElementById('input-nom').value.trim();
+  if (!prenom) { alert('Veuillez entrer votre prénom.'); return; }
+  if (!nom)    { alert('Veuillez entrer votre nom.'); return; }
+  userName     = prenom;
+  userLastName = nom;
+
+  exercises    = getExercises(currentOp);
+  currentStep  = 0;
+
+  const cfg = opConfig[currentOp];
+  const badge = document.getElementById('op-badge-ex');
+  badge.textContent = cfg.label;
+  badge.style.background = cfg.color + '22';
+  badge.style.color = cfg.color;
+  badge.style.border = '1px solid ' + cfg.color + '55';
+
+  showScreen('screen-exercise');
+  renderExercise();
+}
+
+function renderExercise() {
+  clearFeedback();
+  const ex  = exercises[currentStep];
+  const sym = getSymbol(currentOp);
+  const total = exercises.length;
+
+  document.getElementById('equation-text').innerHTML =
+    `<span class="eq-colored">${ex.a}</span> ${sym} <span class="eq-colored">${ex.b}</span> = ?`;
+
+  const pct = Math.round((currentStep / total) * 100);
+  document.getElementById('progress-fill').style.width = pct + '%';
+  document.getElementById('progress-label').textContent = `Calcul ${currentStep + 1} / ${total}`;
+  document.getElementById('progress-pct').textContent = pct + '%';
+
+  const inp = document.getElementById('answer-input');
+  inp.value = '';
+  inp.classList.remove('shake');
+  setTimeout(() => inp.focus(), 100);
+}
+
+function checkAnswer() {
+  const inp = document.getElementById('answer-input');
+  const raw = inp.value.trim();
+  if (raw === '') return;
+
+  const userVal = parseFloat(raw);
+  const ex = exercises[currentStep];
+  const correct = computeAnswer(currentOp, ex.a, ex.b);
+
+  // For division, allow tolerance
+  const isCorrect = (currentOp === 'division')
+    ? Math.abs(userVal - correct) < 0.01
+    : userVal === correct;
+
+  if (isCorrect) {
+    showFeedback('success', `🎉 Bravo ${userName} ! C'est la bonne réponse !`);
+    currentStep++;
+    if (currentStep >= exercises.length) {
+      // Finished!
+      setTimeout(() => showWin(), 1200);
+    } else {
+      setTimeout(() => renderExercise(), 1400);
+    }
+  } else {
+    inp.classList.remove('shake');
+    inp.offsetHeight; // reflow
+    inp.classList.add('shake');
+    showFeedback('error',
+      `😅 Monsieur/Madame ${userName}, vous venez d'échouer avec ce petit calcul, veuillez réessayer.`
+    );
+    inp.value = '';
+    setTimeout(() => inp.focus(), 100);
+  }
+}
+
+function showFeedback(type, msg) {
+  const fb = document.getElementById('feedback');
+  fb.className = 'feedback ' + type;
+  fb.textContent = msg;
+  if (feedbackTimer) clearTimeout(feedbackTimer);
+  if (type === 'success') {
+    feedbackTimer = setTimeout(clearFeedback, 1300);
+  }
+}
+function clearFeedback() {
+  const fb = document.getElementById('feedback');
+  fb.className = 'feedback';
+  fb.textContent = '';
+}
+
+function showWin() {
+  const opLabel = opConfig[currentOp].label;
+  document.getElementById('win-title').textContent = `Félicitations ${userName} ! 🎊`;
+  document.getElementById('win-msg').textContent =
+    `Tu as terminé toute la table de ${opLabel.replace(/[^\w\s]/gi,'').trim().toLowerCase()}. Excellent travail !`;
+  showScreen('screen-win');
+  launchConfetti();
+}
+
+// === CONFETTI ===
+function launchConfetti() {
+  const wrap = document.getElementById('confetti');
+  wrap.innerHTML = '';
+  const colors = ['#ffd166','#f4a261','#2ec4b6','#e84393','#06d6a0','#a8dadc','#ff9f1c'];
+  for (let i = 0; i < 90; i++) {
+    const d = document.createElement('div');
+    d.className = 'confetti-dot';
+    d.style.cssText = `
+      left: ${Math.random()*100}%;
+      background: ${colors[Math.floor(Math.random()*colors.length)]};
+      width: ${6+Math.random()*8}px;
+      height: ${6+Math.random()*8}px;
+      border-radius: ${Math.random()>0.5?'50%':'3px'};
+      --spd: ${(1.5+Math.random()*2).toFixed(1)}s;
+      --drift: ${(Math.random()*160-80).toFixed(0)}px;
+      animation-delay: ${(Math.random()*0.8).toFixed(2)}s;
+    `;
+    wrap.appendChild(d);
+    setTimeout(() => d.remove(), 4000);
+  }
+}
+</script>
+</body>
+</html>
